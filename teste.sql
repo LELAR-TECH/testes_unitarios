@@ -1,6 +1,7 @@
 SELECT
     ID_PEDIDO,
-    ID_PRODUCTO
+    ID_PRODUCTO,
+    valor
 FROM TESTE
 GROUP BY
     1,
