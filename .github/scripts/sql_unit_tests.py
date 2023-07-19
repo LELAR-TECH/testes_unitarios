@@ -20,7 +20,7 @@ pull_number = event["number"]
 pull_request = repo.get_pull(int(pull_number))
 
 # Regex to match GROUP BY statements with indices instead of column names
-group_by_index_pattern = re.compile(r"GROUP\s+BY\s+[0-9]+", re.IGNORECASE)
+group_by_index_pattern = re.compile(r"(GROUP\s+BY\s+|,\s*)[0-9]+", re.IGNORECASE)
 
 # Get the list of files modified in the pull request
 files = pull_request.get_files()
