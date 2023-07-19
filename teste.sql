@@ -1,0 +1,7 @@
+SELECT
+    ID_PEDIDO,
+    ID_PRODUCTO
+FROM TESTE
+GROUP BY
+    1,
+    2
