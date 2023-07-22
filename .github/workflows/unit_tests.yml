@@ -25,6 +25,10 @@ jobs:
 
       - name: Teste SQL
         run: python .github/scripts/sql_unit_tests.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_SECRET }}
 
       - name: Reacoes
         run: python .github/scripts/teste_reacoes_pr.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_SECRET }}
