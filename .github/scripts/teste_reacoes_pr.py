@@ -25,5 +25,6 @@ pr = repo.get_pull(int(pull_number))
 # Adicionando um comentário ao PR
 pr.create_issue_comment("Obrigado por sua contribuição!")
 
-# Adicionando uma reação ao PR
-pr.issue.create_reaction("heart")
+# Adicionando uma reação ao Issue associado ao PR
+issue = repo.get_issue(int(pull_number))
+issue.create_reaction("heart")
