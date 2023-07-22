@@ -1,5 +1,6 @@
 import os
 import re
+import json
 from github import Github
 
 # Get the Github token and PR number from environment variables
