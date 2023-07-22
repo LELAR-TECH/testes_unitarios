@@ -37,15 +37,15 @@ for file in files:
 
         # For each statement
         for statement in parsed:
+            # Set a flag for when we're in the GROUP BY clause
+            in_group_by = False
+
             # For each token in the statement
             for token in statement.tokens:
                 # If the token is a keyword and is equal to "GROUP BY"
                 if token.ttype is sqlparse.tokens.Keyword and token.value.upper() == "GROUP BY":
-                    # The next token should be the GROUP BY item list
-                    group_by_list = token.get_parent().get_next_sibling()
-                    
-                    # For each token in the GROUP BY list
-                    for group_by_item in group_by_list.get_identifiers():
-                        # If the item is a number
-                        if group_by_item.ttype is sqlparse.tokens.Number:
-                            raise Exception(f"File {file.filename} uses indices in a GROUP BY statement. Please use column names instead.")
+                    in_group_by = True
+                elif in_group_by and token.ttype is sqlparse.tokens.Number:
+                    raise Exception(f"File {file.filename} uses indices in a GROUP BY statement. Please use column names instead.")
+                elif token.ttype is sqlparse.tokens.Keyword and token.value.upper() != "GROUP BY":
+                    in_group_by = False
