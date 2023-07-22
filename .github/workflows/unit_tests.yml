@@ -24,3 +24,4 @@ jobs:
 
       - name: Run script
         run: python .github/scripts/sql_unit_tests.py
+        run: python .github/scripts/teste_reacoes_pr.py
