@@ -22,6 +22,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install PyGithub
 
-      - name: Run script
+      - name: Teste SQL
         run: python .github/scripts/sql_unit_tests.py
+
+      - name: Reacoes
         run: python .github/scripts/teste_reacoes_pr.py
