@@ -1,6 +1,6 @@
 import os
-import re
 import json
+import sqlparse
 from github import Github
 
 # Get the Github token and PR number from environment variables
@@ -20,14 +20,32 @@ pull_number = event["number"]
 
 pull_request = repo.get_pull(int(pull_number))
 
-# Regex to match GROUP BY statements with indices instead of column names
-group_by_index_pattern = re.compile(r"(GROUP\s+BY\s+|,\s*)[0-9]+", re.IGNORECASE)
-
 # Get the list of files modified in the pull request
 files = pull_request.get_files()
 
-# For each file, check if it ends with .sql and if it does, check for GROUP BY indices
+# For each file, check if it ends with .sql
 for file in files:
     if file.filename.endswith(".sql"):
-        if group_by_index_pattern.search(file.patch):
-            raise Exception(f"File {file.filename} uses indices in a GROUP BY statement. Please use column names instead.")
+        # Get the content of the file
+        content_file = repo.get_contents(file.filename, ref='refs/pull/{}/head'.format(pull_number))
+
+        # Decode the content of the file
+        file_content = content_file.decoded_content.decode('utf-8')
+
+        # Parse the SQL into a list of statements
+        parsed = sqlparse.parse(file_content)
+
+        # For each statement
+        for statement in parsed:
+            # For each token in the statement
+            for token in statement.tokens:
+                # If the token is a keyword and is equal to "GROUP BY"
+                if token.ttype is sqlparse.tokens.Keyword and token.value.upper() == "GROUP BY":
+                    # The next token should be the GROUP BY item list
+                    group_by_list = token.get_parent().get_next_sibling()
+                    
+                    # For each token in the GROUP BY list
+                    for group_by_item in group_by_list.get_identifiers():
+                        # If the item is a number
+                        if group_by_item.ttype is sqlparse.tokens.Number:
+                            raise Exception(f"File {file.filename} uses indices in a GROUP BY statement. Please use column names instead.")
