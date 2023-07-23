@@ -5,7 +5,7 @@ SELECT
 FROM TESTE
 GROUP BY
     1,
-    2
-    
+    ID_PRODUCTO
+
 
     

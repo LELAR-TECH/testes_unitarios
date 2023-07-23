@@ -44,9 +44,10 @@ def is_valid_statement(statement: str) -> bool:
 
 def review_pr(pull_request: PullRequest, is_valid: bool, message: str) -> None:
     if is_valid:
-        pull_request.create_issue_comment("SQL validation successful. Thanks for your contribution!")
+        pull_request.create_review(event="APPROVE", body="SQL validation successful. Thanks for your contribution!")
     else:
-        pull_request.create_issue_comment(message)
+        pull_request.create_review(event="REQUEST_CHANGES", body=message)
+
 
 
 def main():
