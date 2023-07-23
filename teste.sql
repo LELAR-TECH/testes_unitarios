@@ -5,7 +5,7 @@ SELECT
 FROM TESTE
 GROUP BY
     ID_PEDIDO,
-    2
+    ID_PRODUCTO
 
 
     
