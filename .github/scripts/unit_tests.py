@@ -66,15 +66,13 @@ def is_valid_statement(statement) -> bool:
     return True
 
 
-def review_pr(pull_request: PullRequest, is_valid: bool, message: str):
-    # Create review
-    review = pull_request.create_review(body=message, commit=pull_request.head.sha)
-
-    # Set review state
+def review_pr(pull_request: PullRequest, is_valid: bool, message: str) -> None:
     if is_valid:
-        review.set_review_state(state="APPROVE")
+        commit = pull_request.base.repo.get_commit(pull_request.head.sha)
+        pull_request.create_review(event="APPROVE", body=message, commit=commit)
     else:
-        review.set_review_state(state="REQUEST_CHANGES")
+        commit = pull_request.base.repo.get_commit(pull_request.head.sha)
+        pull_request.create_review(event="REQUEST_CHANGES", body=message, commit=commit)
 
 
 def main():
