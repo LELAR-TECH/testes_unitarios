@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import sqlparse
 from github import Github
 from typing import Tuple
@@ -27,9 +28,11 @@ def get_pull_request() -> Tuple[PullRequest, PullRequestReview]:
     return repo.get_pull(int(pull_number))
 
 
-def validate_sql_file(pull_request: PullRequest) -> Tuple[bool, str]:
+def validate_sql_file(pull_request: PullRequest) -> Tuple[bool, list]:
     # Get the list of files modified in the pull request
     files = pull_request.get_files()
+
+    error_comments = []
 
     # For each file, check if it ends with .sql
     for file in files:
@@ -42,47 +45,45 @@ def validate_sql_file(pull_request: PullRequest) -> Tuple[bool, str]:
             parsed = sqlparse.parse(file_content)
 
             # For each statement
-            for statement in parsed:
+            for i, statement in enumerate(parsed, start=1):
                 # Validate the statement
-                if not is_valid_statement(statement):
-                    return False, f"File {file.filename} uses indices in a GROUP BY statement. Please use column names instead."
-    return True, ""
+                if not is_valid_statement(str(statement)):
+                    error_comments.append((file.filename, i, "This line uses indices in a GROUP BY statement. Please use column names instead."))
+    return len(error_comments) == 0, error_comments
 
 
-def is_valid_statement(statement) -> bool:
-    # Set a flag for when we're in the GROUP BY clause
-    in_group_by = False
+def is_valid_statement(statement: str) -> bool:
+    # Encontra a parte GROUP BY na query
+    group_by_part = re.search("(?i)GROUP BY(.*)", statement, re.DOTALL)
 
-    # For each token in the statement
-    for token in statement.tokens:
-        # If the token is a keyword and is equal to "GROUP BY"
-        if token.ttype is sqlparse.tokens.Keyword and token.value.upper() == "GROUP BY":
-            in_group_by = True
-        elif in_group_by and token.ttype is sqlparse.tokens.Number:
-            return False
-        elif token.ttype is sqlparse.tokens.Keyword and token.value.upper() != "GROUP BY":
-            in_group_by = False
+    if group_by_part:
+        # Remove espaços em branco e divide as palavras
+        items = re.split(",\s*", group_by_part.group(1).strip())
 
+        # Verifica se todos os items são palavras (não números)
+        for item in items:
+            if item.isdigit():
+                return False
     return True
 
 
-def review_pr(pull_request: PullRequest, is_valid: bool, message: str) -> None:
+def review_pr(pull_request: PullRequest, is_valid: bool, comments: list) -> None:
     if is_valid:
         commit = pull_request.base.repo.get_commit(pull_request.head.sha)
-        pull_request.create_review(event="APPROVE", body=message, commit=commit)
+        pull_request.create_review(event="APPROVE", body="SQL validation successful. Thanks for your contribution!", commit=commit)
     else:
-        commit = pull_request.base.repo.get_commit(pull_request.head.sha)
-        pull_request.create_review(event="REQUEST_CHANGES", body=message, commit=commit)
+        review_comments = [pull_request.create_review_comment(comment[2], pull_request.head.sha, comment[0], comment[1]) for comment in comments]
+        pull_request.create_review(event="REQUEST_CHANGES", body="Some lines use indices in a GROUP BY statement. Please use column names instead.", comments=review_comments, commit=pull_request.head.sha)
 
 
 def main():
     pull_request = get_pull_request()
-    is_valid, message = validate_sql_file(pull_request)
+    is_valid, comments = validate_sql_file(pull_request)
 
     if is_valid:
-        review_pr(pull_request, is_valid, "SQL validation successful. Thanks for your contribution!")
+        review_pr(pull_request, is_valid, [])
     else:
-        review_pr(pull_request, is_valid, message)
+        review_pr(pull_request, is_valid, comments)
 
 
 if __name__ == "__main__":
