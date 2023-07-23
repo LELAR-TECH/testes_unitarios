@@ -6,5 +6,6 @@ FROM TESTE
 GROUP BY
     1,
     2
+    
 
     
