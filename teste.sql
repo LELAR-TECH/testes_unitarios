@@ -4,7 +4,7 @@ SELECT
     sum(valor) as valor
 FROM TESTE
 GROUP BY
-    ID_PEDIDO,
+    1,
     2
 
     
