@@ -4,8 +4,8 @@ SELECT
     sum(valor) as valor
 FROM TESTE
 GROUP BY
-    ID_PEDIDO,
-    2
+    1,
+    ID_PRODUCTO
 
 
     
