@@ -29,7 +29,15 @@ jobs:
         run: python .github/scripts/unit_tests.py
 
       - name: Comment on PR
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: actions/github-script@v5
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          message: ${{ env.REVIEW_MESSAGE }}
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const { owner, repo, number } = context.issue;
+            const message = process.env.REVIEW_MESSAGE;
+            const result = await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: number,
+              body: message,
+            });
