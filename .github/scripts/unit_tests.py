@@ -85,9 +85,18 @@ def review_pr(pull_request: PullRequest, is_valid: bool, message: str) -> None:
         message: A message string to include in the review comment
     """
     if is_valid:
-        pull_request.create_review(event="APPROVE", body="SQL validation successful. Thanks for your contribution!")
+        review_message = "SQL validation successful. Thanks for your contribution!"
     else:
-        pull_request.create_review(event="REQUEST_CHANGES", body=message)
+        review_message = message
+
+    # Set the review message as an environment variable
+    os.environ["REVIEW_MESSAGE"] = review_message
+
+    # Create the review
+    if is_valid:
+        pull_request.create_review(event="APPROVE", body=review_message)
+    else:
+        pull_request.create_review(event="REQUEST_CHANGES", body=review_message)
 
 
 def main():
