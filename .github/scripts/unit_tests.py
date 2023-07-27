@@ -75,41 +75,38 @@ def is_valid_sql_statement(statement: str) -> bool:
     return True
 
 
-def review_pr(pull_request: PullRequest, is_valid: bool, message: str) -> None:
+def comment_on_pr(pull_request: PullRequest, is_valid: bool, message: str) -> None:
     """
-    Add a review comment to the pull request.
+    Add a comment to the pull request.
 
     Args:
         pull_request: A pull request object
         is_valid: A boolean indicating whether the SQL file is valid
-        message: A message string to include in the review comment
+        message: A message string to include in the comment
     """
     if is_valid:
-        review_message = "SQL validation successful. Thanks for your contribution!"
+        comment_message = "SQL validation successful. Thanks for your contribution!"
     else:
-        review_message = message
+        comment_message = message
 
-    # Set the review message as an environment variable
-    os.environ["REVIEW_MESSAGE"] = review_message
+    # Set the comment message as an environment variable
+    os.environ["COMMENT_MESSAGE"] = comment_message
 
-    # Create the review
-    if is_valid:
-        pull_request.create_review(event="APPROVE", body=review_message)
-    else:
-        pull_request.create_review(event="REQUEST_CHANGES", body=review_message)
+    # Create the comment
+    pull_request.create_issue_comment(comment_message)
 
 
 def main():
     """
-    Main function to get pull request, validate SQL file and review pull request.
+    Main function to get pull request, validate SQL file and comment on pull request.
     """
     pull_request = get_pull_request()
     validation_status, validation_message = validate_sql_file(pull_request)
 
     if validation_status:
-        review_pr(pull_request, validation_status, "SQL validation successful. Thanks for your contribution!")
+        comment_on_pr(pull_request, validation_status, "SQL validation successful. Thanks for your contribution!")
     else:
-        review_pr(pull_request, validation_status, validation_message)
+        comment_on_pr(pull_request, validation_status, validation_message)
 
 
 if __name__ == "__main__":
