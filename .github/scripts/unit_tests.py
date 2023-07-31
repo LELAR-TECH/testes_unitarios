@@ -88,8 +88,9 @@ def comment_on_pr(is_valid: bool, message: str) -> None:
     else:
         comment_message = message
 
-    # Set the comment message as an environment variable
-    os.environ["COMMENT_MESSAGE"] = comment_message
+    # Write the comment message to a file
+    with open('comment_message.txt', 'w') as file:
+        file.write(comment_message)
 
 
 def main():
