@@ -75,12 +75,11 @@ def is_valid_sql_statement(statement: str) -> bool:
     return True
 
 
-def comment_on_pr(pull_request: PullRequest, is_valid: bool, message: str) -> None:
+def comment_on_pr(is_valid: bool, message: str) -> None:
     """
-    Add a comment to the pull request.
+    Prepare a comment for the pull request.
 
     Args:
-        pull_request: A pull request object
         is_valid: A boolean indicating whether the SQL file is valid
         message: A message string to include in the comment
     """
@@ -92,9 +91,6 @@ def comment_on_pr(pull_request: PullRequest, is_valid: bool, message: str) -> No
     # Set the comment message as an environment variable
     os.environ["COMMENT_MESSAGE"] = comment_message
 
-    # Create the comment
-    pull_request.create_issue_comment(comment_message)
-
 
 def main():
     """
@@ -104,9 +100,9 @@ def main():
     validation_status, validation_message = validate_sql_file(pull_request)
 
     if validation_status:
-        comment_on_pr(pull_request, validation_status, "SQL validation successful. Thanks for your contribution!")
+        comment_on_pr(validation_status, "SQL validation successful. Thanks for your contribution!")
     else:
-        comment_on_pr(pull_request, validation_status, validation_message)
+        comment_on_pr(validation_status, validation_message)
 
 
 if __name__ == "__main__":
