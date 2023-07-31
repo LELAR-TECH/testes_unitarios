@@ -1,5 +1,6 @@
 import os
 import json
+import requests
 import re
 import sqlparse
 from github import Github
@@ -75,11 +76,12 @@ def is_valid_sql_statement(statement: str) -> bool:
     return True
 
 
-def comment_on_pr(is_valid: bool, message: str) -> None:
+def comment_on_pr(pull_request: PullRequest, is_valid: bool, message: str) -> None:
     """
-    Prepare a comment for the pull request.
+    Add a comment to the pull request.
 
     Args:
+        pull_request: A pull request object
         is_valid: A boolean indicating whether the SQL file is valid
         message: A message string to include in the comment
     """
@@ -88,9 +90,18 @@ def comment_on_pr(is_valid: bool, message: str) -> None:
     else:
         comment_message = message
 
-    # Write the comment message to a file
-    with open('comment_message.txt', 'w') as file:
-        file.write(comment_message)
+    # Set the comment message as an environment variable
+    os.environ["COMMENT_MESSAGE"] = comment_message
+
+    # Create the comment using the GitHub API directly
+    url = f"https://api.github.com/repos/{os.getenv('GITHUB_REPOSITORY')}/issues/{pull_request.number}/comments"
+    headers = {"Authorization": f"token {os.getenv('GITHUB_TOKEN')}"}
+    data = {"body": comment_message}
+
+    response = requests.post(url, headers=headers, json=data)
+
+    if response.status_code != 201:
+        raise Exception(f"Failed to create comment on PR. Status code: {response.status_code}, Response: {response.text}")
 
 
 def main():
@@ -101,9 +112,9 @@ def main():
     validation_status, validation_message = validate_sql_file(pull_request)
 
     if validation_status:
-        comment_on_pr(validation_status, "SQL validation successful. Thanks for your contribution!")
+        comment_on_pr(pull_request, validation_status, "SQL validation successful. Thanks for your contribution!")
     else:
-        comment_on_pr(validation_status, validation_message)
+        comment_on_pr(pull_request, validation_status, validation_message)
 
 
 if __name__ == "__main__":
