@@ -24,14 +24,14 @@ jobs:
           pip install sqlparse
 
       - name: Unit Tests
-        id: tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python .github/scripts/unit_tests.py
 
-      - name: Create Check Run
-        uses: LouisBrunner/checks-action@v1.1.1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: SQL Validation
-          conclusion: ${{ steps.tests.outputs.comment_message == 'SQL validation successful. Thanks for your contribution!' && 'success' || 'failure' }}
-          output: |
-            {"title": "SQL Validation", "summary": "${{ steps.tests.outputs.comment_message }}"}
+      - name: Set output message
+        id: output
+        run: |
+          echo "::set-output name=message::$(cat output.txt)"
+          
+      - name: "${{ steps.output.outputs.message }}"
+        run: echo "${{ steps.output.outputs.message }}"

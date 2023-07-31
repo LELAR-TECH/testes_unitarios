@@ -5,8 +5,10 @@ import sqlparse
 from github import Github
 from typing import Tuple
 from github.PullRequest import PullRequest
+from github.PullRequestReview import PullRequestReview
 
-def get_pull_request() -> Tuple[PullRequest, str]:
+
+def get_pull_request() -> Tuple[PullRequest, PullRequestReview]:
     github_token = os.getenv('GITHUB_TOKEN')
     event_path = os.getenv('GITHUB_EVENT_PATH')
     github_api = Github(github_token)
@@ -48,21 +50,16 @@ def is_valid_sql_statement(statement: str) -> bool:
     return True
 
 
-def get_comment_message(is_valid: bool, message: str) -> str:
-    if is_valid:
-        return "SQL validation successful. Thanks for your contribution!"
-    else:
-        return message
-
-
 def main():
     pull_request = get_pull_request()
     validation_status, validation_message = validate_sql_file(pull_request)
 
-    comment_message = get_comment_message(validation_status, validation_message)
-
-    # Store the comment message in an environment variable
-    print(f"::set-output name=comment_message::{comment_message}")
+    if validation_status:
+        with open("output.txt", "w") as f:
+            f.write("SQL validation successful. Thanks for your contribution!")
+    else:
+        with open("output.txt", "w") as f:
+            f.write(validation_message)
 
 
 if __name__ == "__main__":
