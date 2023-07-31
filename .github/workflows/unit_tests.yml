@@ -24,6 +24,14 @@ jobs:
           pip install sqlparse
 
       - name: Unit Tests
-        run: python .github/scripts/unit_tests.py
         env:
-          GITHUB_TOKEN: ${{ secrets.BOT_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python .github/scripts/unit_tests.py
+
+      - name: Set output message
+        id: output
+        run: |
+          echo "::set-output name=message::$(cat output.txt)"
+          
+      - name: "${{ steps.output.outputs.message }}"
+        run: echo "${{ steps.output.outputs.message }}"

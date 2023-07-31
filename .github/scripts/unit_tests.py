@@ -9,12 +9,6 @@ from github.PullRequestReview import PullRequestReview
 
 
 def get_pull_request() -> Tuple[PullRequest, PullRequestReview]:
-    """
-    Get pull request using GitHub API
-
-    Returns:
-        PullRequest object
-    """
     github_token = os.getenv('GITHUB_TOKEN')
     event_path = os.getenv('GITHUB_EVENT_PATH')
     github_api = Github(github_token)
@@ -28,16 +22,6 @@ def get_pull_request() -> Tuple[PullRequest, PullRequestReview]:
 
 
 def validate_sql_file(pull_request: PullRequest) -> Tuple[bool, str]:
-    """
-    Validate sql file in the pull request.
-    
-    Args:
-        pull_request: A pull request object
-    
-    Returns:
-        A tuple where the first element is a boolean indicating whether the SQL file is valid
-        and the second element is a message string.
-    """
     changed_files = pull_request.get_files()
 
     for file in changed_files:
@@ -54,15 +38,6 @@ def validate_sql_file(pull_request: PullRequest) -> Tuple[bool, str]:
 
 
 def is_valid_sql_statement(statement: str) -> bool:
-    """
-    Check if a SQL statement is valid.
-    
-    Args:
-        statement: A SQL statement as a string
-    
-    Returns:
-        A boolean indicating whether the SQL statement is valid.
-    """
     group_by_clause = re.search("(?i)GROUP BY(.*)", statement, re.DOTALL)
 
     if group_by_clause:
@@ -75,32 +50,16 @@ def is_valid_sql_statement(statement: str) -> bool:
     return True
 
 
-def review_pr(pull_request: PullRequest, is_valid: bool, message: str) -> None:
-    """
-    Add a review comment to the pull request.
-
-    Args:
-        pull_request: A pull request object
-        is_valid: A boolean indicating whether the SQL file is valid
-        message: A message string to include in the review comment
-    """
-    if is_valid:
-        pull_request.create_review(event="APPROVE", body="SQL validation successful. Thanks for your contribution!")
-    else:
-        pull_request.create_review(event="REQUEST_CHANGES", body=message)
-
-
 def main():
-    """
-    Main function to get pull request, validate SQL file and review pull request.
-    """
     pull_request = get_pull_request()
     validation_status, validation_message = validate_sql_file(pull_request)
 
     if validation_status:
-        review_pr(pull_request, validation_status, "SQL validation successful. Thanks for your contribution!")
+        with open("output.txt", "w") as f:
+            f.write("SQL validation successful. Thanks for your contribution!")
     else:
-        review_pr(pull_request, validation_status, validation_message)
+        with open("output.txt", "w") as f:
+            f.write(validation_message)
 
 
 if __name__ == "__main__":
