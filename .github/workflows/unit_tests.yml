@@ -7,6 +7,7 @@ on:
 jobs:
   check-sql-files:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -23,17 +24,18 @@ jobs:
           pip install sqlparse
 
       - name: Unit Tests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: tests
         run: python .github/scripts/unit_tests.py
 
-      - name: Read comment
-        id: comment
-        run: |
-          echo "::set-output name=message::$(cat comment_message.txt)"
-
-      - name: Comment on PR
-        uses: marocchino/sticky-pull-request-comment@v2
+      - name: Create Check Run
+        uses: octokit/request-action@v2.x
         with:
+          route: POST /repos/{owner}/{repo}/check-runs
+          mediaType: '{"previews": ["antiope"]}'
+          name: SQL Validation
+          head_sha: ${{ github.event.pull_request.head.sha }}
+          status: completed
+          conclusion: ${{ steps.tests.outputs.comment_message == 'SQL validation successful. Thanks for your contribution!' && 'success' || 'failure' }}
+          output: '{"title":"SQL Validation","summary":"${{ steps.tests.outputs.comment_message }}"}'
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          message: ${{ steps.comment.outputs.message }}

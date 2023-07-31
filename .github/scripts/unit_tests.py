@@ -1,21 +1,12 @@
 import os
 import json
-import requests
 import re
 import sqlparse
 from github import Github
 from typing import Tuple
 from github.PullRequest import PullRequest
-from github.PullRequestReview import PullRequestReview
 
-
-def get_pull_request() -> Tuple[PullRequest, PullRequestReview]:
-    """
-    Get pull request using GitHub API
-
-    Returns:
-        PullRequest object
-    """
+def get_pull_request() -> Tuple[PullRequest, str]:
     github_token = os.getenv('GITHUB_TOKEN')
     event_path = os.getenv('GITHUB_EVENT_PATH')
     github_api = Github(github_token)
@@ -29,16 +20,6 @@ def get_pull_request() -> Tuple[PullRequest, PullRequestReview]:
 
 
 def validate_sql_file(pull_request: PullRequest) -> Tuple[bool, str]:
-    """
-    Validate sql file in the pull request.
-    
-    Args:
-        pull_request: A pull request object
-    
-    Returns:
-        A tuple where the first element is a boolean indicating whether the SQL file is valid
-        and the second element is a message string.
-    """
     changed_files = pull_request.get_files()
 
     for file in changed_files:
@@ -55,15 +36,6 @@ def validate_sql_file(pull_request: PullRequest) -> Tuple[bool, str]:
 
 
 def is_valid_sql_statement(statement: str) -> bool:
-    """
-    Check if a SQL statement is valid.
-    
-    Args:
-        statement: A SQL statement as a string
-    
-    Returns:
-        A boolean indicating whether the SQL statement is valid.
-    """
     group_by_clause = re.search("(?i)GROUP BY(.*)", statement, re.DOTALL)
 
     if group_by_clause:
@@ -76,45 +48,21 @@ def is_valid_sql_statement(statement: str) -> bool:
     return True
 
 
-def comment_on_pr(pull_request: PullRequest, is_valid: bool, message: str) -> None:
-    """
-    Add a comment to the pull request.
-
-    Args:
-        pull_request: A pull request object
-        is_valid: A boolean indicating whether the SQL file is valid
-        message: A message string to include in the comment
-    """
+def get_comment_message(is_valid: bool, message: str) -> str:
     if is_valid:
-        comment_message = "SQL validation successful. Thanks for your contribution!"
+        return "SQL validation successful. Thanks for your contribution!"
     else:
-        comment_message = message
-
-    # Set the comment message as an environment variable
-    os.environ["COMMENT_MESSAGE"] = comment_message
-
-    # Create the comment using the GitHub API directly
-    url = f"https://api.github.com/repos/{os.getenv('GITHUB_REPOSITORY')}/issues/{pull_request.number}/comments"
-    headers = {"Authorization": f"token {os.getenv('GITHUB_TOKEN')}"}
-    data = {"body": comment_message}
-
-    response = requests.post(url, headers=headers, json=data)
-
-    if response.status_code != 201:
-        raise Exception(f"Failed to create comment on PR. Status code: {response.status_code}, Response: {response.text}")
+        return message
 
 
 def main():
-    """
-    Main function to get pull request, validate SQL file and comment on pull request.
-    """
     pull_request = get_pull_request()
     validation_status, validation_message = validate_sql_file(pull_request)
 
-    if validation_status:
-        comment_on_pr(pull_request, validation_status, "SQL validation successful. Thanks for your contribution!")
-    else:
-        comment_on_pr(pull_request, validation_status, validation_message)
+    comment_message = get_comment_message(validation_status, validation_message)
+
+    # Store the comment message in an environment variable
+    print(f"::set-output name=comment_message::{comment_message}")
 
 
 if __name__ == "__main__":
