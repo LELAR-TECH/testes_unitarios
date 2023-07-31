@@ -28,14 +28,10 @@ jobs:
         run: python .github/scripts/unit_tests.py
 
       - name: Create Check Run
-        uses: octokit/request-action@v2.x
+        uses: LouisBrunner/checks-action@v1.1.1
         with:
-          route: POST /repos/{owner}/{repo}/check-runs
-          mediaType: '{"previews": ["antiope"]}'
+          token: ${{ secrets.GITHUB_TOKEN }}
           name: SQL Validation
-          head_sha: ${{ github.event.pull_request.head.sha }}
-          status: completed
           conclusion: ${{ steps.tests.outputs.comment_message == 'SQL validation successful. Thanks for your contribution!' && 'success' || 'failure' }}
-          output: '{"title":"SQL Validation","summary":"${{ steps.tests.outputs.comment_message }}"}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          output: |
+            {"title": "SQL Validation", "summary": "${{ steps.tests.outputs.comment_message }}"}
